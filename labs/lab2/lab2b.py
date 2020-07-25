@@ -85,10 +85,12 @@ def start():
     """
     global speed
     global angle
+    global pastTerm
 
     # Initialize variables
     speed = 0
     angle = 0
+    pastTerm = 0
 
     # Set initial driving speed and angle
     rc.drive.set_speed_angle(speed, angle)
@@ -107,11 +109,26 @@ def update():
     """
     global speed
     global angle
+    global pastTerm
 
     # Search for contours in the current color image
     update_contour()
 
     # TODO: Park the car 30 cm away from the closest orange cone
+    if contour_area != 0:
+        angleTerm = contour_center[1]-320 #320 = half the width of the screen
+        speedTerm = 26000 - contour_area #25000 = area of a cone at approx 30 cm
+        derivTerm = (speedTerm - pastTerm)/rc.get_delta_time() #approx of derivative of area of cone contour
+        speedSign = speedTerm/abs(speedTerm) if speedTerm != 0 else 1
+
+        angle = angleTerm/320 #P steering control
+        speed = speedSign * (abs(speedTerm/50000) - abs(derivTerm)/40000) #P"D" speed control
+        
+        speed = speed if speed > -1 else -1
+        speed = speed if speed < 1 else 1
+        speed = 0 if abs(derivTerm) < 10000 and abs(speedTerm) < 100 else speed
+
+        pastTerm = speedTerm
 
     # Print the current speed and angle when the A button is held down
     if rc.controller.is_down(rc.controller.Button.A):
@@ -123,6 +140,9 @@ def update():
             print("No contour found")
         else:
             print("Center:", contour_center, "Area:", contour_area)
+
+    # Send commands to car
+    rc.drive.set_speed_angle(speed,angle) 
 
 
 def update_slow():

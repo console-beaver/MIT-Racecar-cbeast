@@ -32,14 +32,17 @@ MIN_CONTOUR_AREA = 30
 CROP_FLOOR = ((360, 0), (rc.camera.get_height(), rc.camera.get_width()))
 
 # Colors, stored as a pair (hsv_min, hsv_max)
-BLUE = ((90, 50, 50), (120, 255, 255))  # The HSV range for the color blue
-# TODO (challenge 1): add HSV ranges for other colors
+BLUE = ((90, 50, 50), (100, 255, 255))  # The HSV range for the color blue
+GREEN = ((35,50,50),(70,255,255))
+RED = ((0,50,50),(10,255,255))
+# TODO (challenge 1): add HSV ranges for other colors DONE
 
 # >> Variables
 speed = 0.0  # The current speed of the car
 angle = 0.0  # The current angle of the car's wheels
 contour_center = None  # The (pixel row, pixel column) of contour
 contour_area = 0  # The area of contour
+color_priority = (BLUE,RED,GREEN)
 
 ########################################################################################
 # Functions
@@ -60,14 +63,17 @@ def update_contour():
         contour_center = None
         contour_area = 0
     else:
-        # TODO (challenge 1): Search for multiple tape colors with a priority order
+        # TODO (challenge 1): Search for multiple tape colors with a priority order DONE
         # (currently we only search for blue)
 
         # Crop the image to the floor directly in front of the car
         image = rc_utils.crop(image, CROP_FLOOR[0], CROP_FLOOR[1])
 
-        # Find all of the blue contours
-        contours = rc_utils.find_contours(image, BLUE[0], BLUE[1])
+        # Find all of the colored contours
+        for color in color_priority:
+            contours = rc_utils.find_contours(image, color[0], color[1])
+            if len(contours) > 0:
+                break
 
         # Select the largest contour
         contour = rc_utils.get_largest_contour(contours, MIN_CONTOUR_AREA)
@@ -134,11 +140,9 @@ def update():
     if contour_center is not None:
         # Current implementation: bang-bang control (very choppy)
         # TODO (warmup): Implement a smoother way to follow the line
-        if contour_center[1] < rc.camera.get_width() / 2:
-            angle = -1
-        else:
-            angle = 1
-
+        errorTerm = contour_center[1]-320
+        angle = errorTerm/320
+        #dimensionsa re 480x640
     # Use the triggers to control the car's speed
     forwardSpeed = rc.controller.get_trigger(rc.controller.Trigger.RIGHT)
     backSpeed = rc.controller.get_trigger(rc.controller.Trigger.LEFT)

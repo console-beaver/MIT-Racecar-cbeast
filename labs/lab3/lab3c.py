@@ -35,6 +35,8 @@ def start():
     """
     This function is run once every time the start button is pressed
     """
+    global pastTerm
+    pastTerm = 0
     # Have the car begin at a stop
     rc.drive.stop()
 
@@ -50,6 +52,31 @@ def update():
     # TODO: Park the car 20 cm away from the closest wall with the car directly facing
     # the wall
 
+    global pastTerm
+    scan = np.array(rc.lidar.get_samples())
+    scan.setflags(write=1)
+    scan[scan < 0.1] = 9999
+
+    minDist = min(scan)
+    minIndex = np.where(scan==min(scan))[0][0]
+    minAngle = minIndex/2 #0<=angle<=360
+    minAngle -= 360 if minAngle > 180 else 0 #-180<=angle<=180
+    
+    angleTerm = minAngle - 0
+    speedTerm = minDist - 41
+    derivTerm = (speedTerm - pastTerm)/rc.get_delta_time()
+
+    angle = angleTerm/20 #angle P controller
+    speed = (speedTerm/150 + derivTerm/150) #speed PD controller
+
+    angle = -1 if angle < -1 else angle
+    angle = 1 if angle > 1 else angle
+    speed = -1 if speed < -1 else speed
+    speed = 1 if speed > 1 else speed
+
+    pastTerm = speedTerm
+
+    rc.drive.set_speed_angle(speed,angle)
 
 ########################################################################################
 # DO NOT MODIFY: Register start and update and begin execution
