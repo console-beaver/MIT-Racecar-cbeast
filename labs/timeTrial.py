@@ -18,7 +18,7 @@ PURPLE =((130,200,200),(150,255,255))
 SIDE_BLINDS = 0
 CROP_FLOOR = ((300,SIDE_BLINDS),(rc.camera.get_height(),rc.camera.get_width()-SIDE_BLINDS))
 MIN_CONTOUR_AREA = 30
-STAGE = 0
+STAGE = 1
 FAST_COLOR = None
 
 def start():
@@ -44,6 +44,7 @@ def update():
         #if ids is not None and 199 in ids:
             #print("turn!")
     elif STAGE == 1:
+        rc.set_max_speed = 3.0
         angle = followLine(COLOR_PRIORITY)
         speed = 1
     elif STAGE == 2:
